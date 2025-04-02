@@ -115,8 +115,14 @@ jobs:
             CONFIG_FILE="build/CPackConfig.cmake"
             if [ ! -f "$CONFIG_FILE" ]; then
               echo "Error: CPackConfig.cmake not found. Make sure CMake configuration and build were successful."
+              ls -l build/  # Pour voir le contenu du répertoire
               exit 1
             fi
+          
+            # Afficher le contenu du fichier pour diagnostic
+            echo "=== CPackConfig.cmake Content ==="
+            cat "$CONFIG_FILE"
+            echo "================================"
             
             MAJOR=$(grep 'set(CPACK_PACKAGE_VERSION_MAJOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
             MINOR=$(grep 'set(CPACK_PACKAGE_VERSION_MINOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
