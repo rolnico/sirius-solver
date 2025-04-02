@@ -56,20 +56,9 @@ jobs:
           cmake --install build
 
       - name: Upload Sirius archive
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_artifacts }}
+#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_artifacts }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
         with:
-          name: ubuntu_sirius-solver-install
+          name: sirius-solver-install-ubuntu-${{ env.MAVEN_PROJECT_VERSION }}
           path: |
-            metrix-simulator/build/install/bin
-            metrix-simulator/build/install/etc
-
-      - name: Zip Install Sirius
-        shell: bash
-        run: |
-          zip -r "${ARCHIVE_NAME}" "${SIRIUS_INSTALL_DIR}"
-
-      - name: Upload release package
-        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2.0.9
-        with:
-          files: ${{ steps.sirius-variables.outputs.archive-name }}
+            "${SIRIUS_INSTALL_DIR}"
