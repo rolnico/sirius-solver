@@ -58,11 +58,15 @@ jobs:
       - name: Extract Sirius version
         shell: bash
         run: |
-          VERSION=$(cmake -P - <<EOF
-          include(build/CPackConfig.cmake)
-          message("\${CPACK_PACKAGE_VERSION_MAJOR}.\${CPACK_PACKAGE_VERSION_MINOR}.\${CPACK_PACKAGE_VERSION_PATCH}")
-          EOF
-          )
+          CONFIG_FILE="build/CPackConfig.cmake"
+          if [ ! -f "$CONFIG_FILE" ]; then
+          echo "Error: CPackConfig.cmake not found. Make sure CMake configuration and build were successful."
+          exit 1
+          fi
+          MAJOR=$(grep 'set(CPACK_PACKAGE_VERSION_MAJOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
+          MINOR=$(grep 'set(CPACK_PACKAGE_VERSION_MINOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
+          PATCH=$(grep 'set(CPACK_PACKAGE_VERSION_PATCH' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
+          VERSION="$MAJOR.$MINOR.$PATCH"
           echo "SIRIUS_VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Upload Sirius archive
