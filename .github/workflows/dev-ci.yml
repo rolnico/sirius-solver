@@ -69,9 +69,15 @@ jobs:
           VERSION="$MAJOR.$MINOR.$PATCH"
           echo "SIRIUS_VERSION=$VERSION" >> "$GITHUB_ENV"
 
+      - name: Prepare archive directory
+        shell: bash
+        run: |
+          mkdir -p sirius-artifact
+          mv "${{ env.SIRIUS_INSTALL_DIR }}" sirius-artifact/
+
       - name: Upload Sirius archive
 #        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_artifacts }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
         with:
           name: sirius-solver-install-ubuntu-${{ env.SIRIUS_VERSION }}
-          path: ./${{ env.SIRIUS_INSTALL_DIR }}
+          path: sirius-artifact
