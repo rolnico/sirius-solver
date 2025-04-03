@@ -95,7 +95,7 @@ jobs:
 
       - name: Run build steps in Docker container
         run: |
-          docker run --name build_container -v ./sirius-solver:/workspace centos7withcmake:latest /bin/bash -c "
+          docker run --name build_container -v $GITHUB_WORKSPACE:/workspace centos7withcmake:latest /bin/bash -c "
             cd /workspace &&
             cmake -S src -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=centos7_sirius-solver-install &&
             cmake --build build --config Release -j14 &&
