@@ -45,7 +45,7 @@ jobs:
       - name: Build Sirius
         shell: bash
         run: |
-          cmake --build build --config Release -j14
+          cmake --build build --config Release --parallel
 
       - name: Install Sirius
         shell: bash
@@ -117,6 +117,72 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
         with:
           name: sirius-solver-install-centos7-${{ env.SIRIUS_VERSION }}
+          path: sirius-artifact
+
+  dev_oracle_linux8:
+    name: Build Sirius on Oracle Linux 8
+    runs-on: ubuntu-latest
+    container: 'oraclelinux:8'
+    steps:
+      - name: Install required dependencies
+        run: |
+          dnf update -y
+          dnf install -y epel-release dnf-plugins-core
+          dnf config-manager --set-enabled ol8_codeready_builder
+          dnf install -y git cmake make gcc gcc-c++ ninja-build || true
+          dnf clean all
+
+      - name: Checkout sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set Sirius output variables
+        id: sirius-variables
+        shell: bash
+        run: >
+          echo "SIRIUS_INSTALL_DIR=ol8_sirius-solver-install" >> "$GITHUB_ENV"
+
+      - name: Configure Sirius
+        shell: bash
+        run: |
+          cmake -S src \
+                -B build \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_INSTALL_PREFIX="${{ env.SIRIUS_INSTALL_DIR }}"
+
+      - name: Build Sirius
+        shell: bash
+        run: >
+          cmake --build build --config Release --parallel
+
+      - name: Install Sirius
+        shell: bash
+        run: >
+          cmake --install build
+
+      - name: Extract Sirius version
+        shell: bash
+        run: |
+          CONFIG_FILE="build/CPackConfig.cmake"
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "Error: CPackConfig.cmake not found. Make sure CMake configuration and build were successful."
+            exit 1
+          fi
+          MAJOR=$(grep 'set(CPACK_PACKAGE_VERSION_MAJOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
+          MINOR=$(grep 'set(CPACK_PACKAGE_VERSION_MINOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
+          PATCH=$(grep 'set(CPACK_PACKAGE_VERSION_PATCH' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
+          echo "SIRIUS_VERSION=$MAJOR.$MINOR.$PATCH" >> "$GITHUB_ENV"
+
+      - name: Prepare archive directory
+        shell: bash
+        run: |
+          mkdir -p sirius-artifact
+          mv "${{ env.SIRIUS_INSTALL_DIR }}" sirius-artifact/
+
+      - name: Upload Sirius archive
+        #        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_artifacts }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
+        with:
+          name: sirius-solver-install-ol8-${{ env.SIRIUS_VERSION }}
           path: sirius-artifact
 
   dev_windows:
