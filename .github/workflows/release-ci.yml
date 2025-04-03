@@ -67,6 +67,7 @@ jobs:
         shell: bash
         continue-on-error: false
         run: |
+          echo "SIRIUS_INSTALL_DIR=install" >> "$GITHUB_ENV"
           echo "ARCHIVE_PATH=${{ github.workspace }}/sirius-solver-centos7" >> "$GITHUB_ENV"
 
       - name: Build the Docker image
