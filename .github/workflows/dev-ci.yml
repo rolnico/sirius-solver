@@ -191,6 +191,7 @@ jobs:
 
       - name: Extract Sirius version
         run: |
+          cat ${{ env.SIRIUS_INSTALL_DIR }}\include\version.h
           $versionLine = Get-Content "${{ env.SIRIUS_INSTALL_DIR }}\include\version.h" | Select-String -Pattern 'SIRIUS_SOLVER_VERSION'
           $SIRIUS_VERSION = $versionLine -replace '.*"([^"]+)".*', '$1'
           echo "SIRIUS_VERSION=$SIRIUS_VERSION" | Out-File -FilePath $env:GITHUB_ENV -Append
