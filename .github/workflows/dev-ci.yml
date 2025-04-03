@@ -95,65 +95,32 @@ jobs:
 
       - name: Run build steps in Docker container
         run: |
-          docker run --name build_container -v $GITHUB_WORKSPACE:/workspace centos7withcmake:latest /bin/bash -c "
-            cd /workspace
-            echo "====== /workspace content ======"
-            ls -la /workspace
-            echo "================================"
-
-            # Define environment variables
-            export SIRIUS_INSTALL_DIR=centos7_sirius-solver-install
-            export SIRIUS_INSTALL_PATH="/workspace/$SIRIUS_INSTALL_DIR"
-            export ARCHIVE_NAME="centos7_sirius-solver.zip"
-            export ARCHIVE_PATH="/workspace/$ARCHIVE_NAME"
-            
-            # Configuration
-            cmake -S src -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$SIRIUS_INSTALL_DIR"
-            
-            # Compilation and installation
-            cmake --build build --config Release -j14
+          docker run --name build_container -v ./sirius-solver:/workspace centos7withcmake:latest /bin/bash -c "
+            cd /workspace &&
+            cmake -S src -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=centos7_sirius-solver-install &&
+            cmake --build build --config Release -j14 &&
             cmake --install build
-          
-            echo "====== /workspace content ======"
-            ls -la /workspace
-            echo "================================"
-          
-            echo "====== /workspace/build content ======"
-            ls -la /workspace/build
-            echo "================================"
-            
-            # Extraction of Sirius version
-            CONFIG_FILE="build/CPackConfig.cmake"
-            if [ ! -f "$CONFIG_FILE" ]; then
-              echo "Error: CPackConfig.cmake not found. Make sure CMake configuration and build were successful."
-              ls -l build/  # Pour voir le contenu du répertoire
-              exit 1
-            fi
-          
-            # Afficher le contenu du fichier pour diagnostic
-            echo "=== CPackConfig.cmake Content ==="
-            cat "$CONFIG_FILE"
-            echo "================================"
-            
-            MAJOR=$(grep 'set(CPACK_PACKAGE_VERSION_MAJOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
-            MINOR=$(grep 'set(CPACK_PACKAGE_VERSION_MINOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
-            PATCH=$(grep 'set(CPACK_PACKAGE_VERSION_PATCH' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
-            VERSION="$MAJOR.$MINOR.$PATCH"
-            
-            # Prepare upload
-            mkdir -p sirius-artifact
-            mv "$SIRIUS_INSTALL_DIR" sirius-artifact/
-            
-            # Save Sirius version
-            echo "SIRIUS_VERSION=$VERSION" >> /workspace/sirius_version.txt
           "
 
-      - name: Retrieve Sirius version
+      - name: Extract Sirius version
         run: |
-          echo "SIRIUS_VERSION=$(cat sirius_version.txt)" >> $GITHUB_ENV
+          CONFIG_FILE="build/CPackConfig.cmake"
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "Error: CPackConfig.cmake not found. Make sure CMake configuration and build were successful."
+            exit 1
+          fi
+          MAJOR=$(grep 'set(CPACK_PACKAGE_VERSION_MAJOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
+          MINOR=$(grep 'set(CPACK_PACKAGE_VERSION_MINOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
+          PATCH=$(grep 'set(CPACK_PACKAGE_VERSION_PATCH' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
+          echo "SIRIUS_VERSION=$MAJOR.$MINOR.$PATCH" >> "$GITHUB_ENV"
+
+      - name: Prepare archive directory
+        run: |
+          mkdir -p sirius-artifact
+          mv centos7_sirius-solver-install sirius-artifact/
 
       - name: Upload Sirius archive
-        if: github.event_name == 'workflow_dispatch' && inputs.generate_artifacts == 'true'
+        #if: github.event_name == 'workflow_dispatch' && inputs.generate_artifacts == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
         with:
           name: sirius-solver-install-centos7-${{ env.SIRIUS_VERSION }}
