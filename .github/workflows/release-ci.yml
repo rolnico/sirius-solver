@@ -108,7 +108,7 @@ jobs:
           dnf update -y
           dnf install -y epel-release dnf-plugins-core
           dnf config-manager --set-enabled ol8_codeready_builder
-          dnf install -y git cmake make gcc gcc-c++ ninja-build || true
+          dnf install -y git cmake make gcc gcc-c++ ninja-build zip || true
           dnf clean all
 
       - name: Checkout sources
