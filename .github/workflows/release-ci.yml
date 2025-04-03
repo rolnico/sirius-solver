@@ -20,7 +20,7 @@ jobs:
         id: sirius-variables
         shell: bash
         continue-on-error: false
-        run: >
+        run: |
           echo "SIRIUS_INSTALL_DIR=install" >> "$GITHUB_ENV"
           echo "ARCHIVE_NAME=ubuntu_sirius-solver" >> "$GITHUB_ENV"
           echo "ARCHIVE_PATH=${{ github.workspace }}/$ARCHIVE_NAME" >> "$GITHUB_ENV"
