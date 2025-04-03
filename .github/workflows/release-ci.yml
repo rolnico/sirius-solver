@@ -22,8 +22,7 @@ jobs:
         continue-on-error: false
         run: |
           echo "SIRIUS_INSTALL_DIR=install" >> "$GITHUB_ENV"
-          echo "ARCHIVE_NAME=ubuntu_sirius-solver" >> "$GITHUB_ENV"
-          echo "ARCHIVE_PATH=${{ github.workspace }}/$ARCHIVE_NAME" >> "$GITHUB_ENV"
+          echo "ARCHIVE_PATH=${{ github.workspace }}/ubuntu_sirius-solver" >> "$GITHUB_ENV"
 
       - name: Configure Sirius
         shell: bash
