@@ -102,7 +102,9 @@ jobs:
   release_oracle_linux8:
     name: Release on Oracle Linux 8
     runs-on: ubuntu-latest
-    container: 'oraclelinux:8'
+    container:
+      image: 'oraclelinux:8'
+      options: --volume "${{ github.workspace }}:/github/workspace"
     steps:
       - name: Install required dependencies
         run: |
@@ -121,21 +123,21 @@ jobs:
         continue-on-error: false
         run: |
           echo "SIRIUS_INSTALL_DIR=install" >> "$GITHUB_ENV"
-          echo "ARCHIVE_PATH=${{ github.workspace }}/sirius-solver-oraclelinux8" >> "$GITHUB_ENV"
+          echo "ARCHIVE_PATH=/github/workspace/sirius-solver-oraclelinux8" >> "$GITHUB_ENV"
 
       - name: Configure Sirius
         shell: bash
-        run: |
+        run: >
           cmake -S src -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${{ env.SIRIUS_INSTALL_DIR }}"
 
       - name: Build Sirius
         shell: bash
-        run: |
+        run: >
           cmake --build build --config Release --parallel
 
       - name: Install Sirius
         shell: bash
-        run: |
+        run: >
           cmake --install build
 
       - name: Extract Sirius version
