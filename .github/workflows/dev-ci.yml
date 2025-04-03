@@ -43,7 +43,7 @@ jobs:
           cmake -S src \
                 -B build \
                 -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_INSTALL_PREFIX="${SIRIUS_INSTALL_DIR}"
+                -DCMAKE_INSTALL_PREFIX="${{ env.SIRIUS_INSTALL_DIR }}"
 
       - name: Build Sirius
         shell: bash
@@ -60,14 +60,13 @@ jobs:
         run: |
           CONFIG_FILE="build/CPackConfig.cmake"
           if [ ! -f "$CONFIG_FILE" ]; then
-          echo "Error: CPackConfig.cmake not found. Make sure CMake configuration and build were successful."
-          exit 1
+            echo "Error: CPackConfig.cmake not found. Make sure CMake configuration and build were successful."
+            exit 1
           fi
           MAJOR=$(grep 'set(CPACK_PACKAGE_VERSION_MAJOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
           MINOR=$(grep 'set(CPACK_PACKAGE_VERSION_MINOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
           PATCH=$(grep 'set(CPACK_PACKAGE_VERSION_PATCH' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
-          VERSION="$MAJOR.$MINOR.$PATCH"
-          echo "SIRIUS_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "SIRIUS_VERSION=$MAJOR.$MINOR.$PATCH" >> "$GITHUB_ENV"
 
       - name: Prepare archive directory
         shell: bash
@@ -121,4 +120,56 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
         with:
           name: sirius-solver-install-centos7-${{ env.SIRIUS_VERSION }}
+          path: sirius-artifact
+
+  dev_windows:
+    name: Build Sirius on Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set Sirius output variables
+        id: sirius-variables
+        continue-on-error: false
+        run: >
+          echo "SIRIUS_INSTALL_DIR=windows_sirius-solver-install" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Configure Sirius
+        run: |
+          cmake -S src -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${{ env.SIRIUS_INSTALL_DIR }}"
+
+      - name: Build Sirius
+        run: |
+          cmake --build build --config Release --parallel
+
+      - name: Install Sirius
+        run: |
+          cmake --install build
+
+      - name: Extract Sirius version
+        run: |
+          $configFile = "build/CPackConfig.cmake"
+          if (!(Test-Path $configFile)) {
+            Write-Host "Error: CPackConfig.cmake not found. Make sure CMake configuration and build were successful."
+            exit 1
+          }
+          $major = Select-String -Path $configFile -Pattern 'set\(CPACK_PACKAGE_VERSION_MAJOR "(\d+)"\)' | % { $_.Matches.Groups[1].Value }
+          $minor = Select-String -Path $configFile -Pattern 'set\(CPACK_PACKAGE_VERSION_MINOR "(\d+)"\)' | % { $_.Matches.Groups[1].Value }
+          $patch = Select-String -Path $configFile -Pattern 'set\(CPACK_PACKAGE_VERSION_PATCH "(\d+)"\)' | % { $_.Matches.Groups[1].Value }
+          echo "SIRIUS_VERSION=$major.$minor.$patch" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Prepare archive directory
+        run: |
+          New-Item -ItemType Directory -Path sirius-artifact | Out-Null
+          Move-Item -Path "${{ env.SIRIUS_INSTALL_DIR }}" -Destination "sirius-artifact\" -Force
+
+      - name: Upload Sirius archive
+        #        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_artifacts }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
+        with:
+          name: sirius-solver-install-windows-${{ env.SIRIUS_VERSION }}
           path: sirius-artifact
