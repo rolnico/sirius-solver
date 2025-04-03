@@ -99,7 +99,9 @@ jobs:
             cd /workspace &&
             cmake -S src -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=centos7_sirius-solver-install &&
             cmake --build build --config Release -j14 &&
-            cmake --install build
+            cmake --install build &&
+            mkdir -p sirius-artifact &&
+            mv centos7_sirius-solver-install sirius-artifact/
           "
 
       - name: Extract Sirius version
@@ -113,11 +115,6 @@ jobs:
           MINOR=$(grep 'set(CPACK_PACKAGE_VERSION_MINOR' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
           PATCH=$(grep 'set(CPACK_PACKAGE_VERSION_PATCH' "$CONFIG_FILE" | sed -E 's/.*"([0-9]+)".*/\1/')
           echo "SIRIUS_VERSION=$MAJOR.$MINOR.$PATCH" >> "$GITHUB_ENV"
-
-      - name: Prepare archive directory
-        run: |
-          mkdir -p sirius-artifact
-          mv centos7_sirius-solver-install sirius-artifact/
 
       - name: Upload Sirius archive
         #if: github.event_name == 'workflow_dispatch' && inputs.generate_artifacts == 'true'
