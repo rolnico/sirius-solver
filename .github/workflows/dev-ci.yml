@@ -191,15 +191,9 @@ jobs:
 
       - name: Extract Sirius version
         run: |
-          $configFile = "build/CPackConfig.cmake"
-          if (!(Test-Path $configFile)) {
-            Write-Host "Error: CPackConfig.cmake not found. Make sure CMake configuration and build were successful."
-            exit 1
-          }
-          $major = Select-String -Path $configFile -Pattern 'set\(CPACK_PACKAGE_VERSION_MAJOR "(\d+)"\)' | % { $_.Matches.Groups[1].Value }
-          $minor = Select-String -Path $configFile -Pattern 'set\(CPACK_PACKAGE_VERSION_MINOR "(\d+)"\)' | % { $_.Matches.Groups[1].Value }
-          $patch = Select-String -Path $configFile -Pattern 'set\(CPACK_PACKAGE_VERSION_PATCH "(\d+)"\)' | % { $_.Matches.Groups[1].Value }
-          echo "SIRIUS_VERSION=$major.$minor.$patch" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $versionLine = Get-Content "${{ env.SIRIUS_INSTALL_DIR }}\include\version.h" | Select-String -Pattern 'SIRIUS_SOLVER_VERSION'
+          $SIRIUS_VERSION = $versionLine -replace '.*"([^"]+)".*', '$1'
+          echo "SIRIUS_VERSION=$SIRIUS_VERSION" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Prepare archive directory
         run: |
