@@ -62,7 +62,7 @@ jobs:
           mv "${{ env.SIRIUS_INSTALL_DIR }}" sirius-artifact/
 
       - name: Upload Sirius archive
-#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_artifacts }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_artifacts }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
         with:
           name: sirius-solver-install-ubuntu-${{ env.SIRIUS_VERSION }}
@@ -96,7 +96,7 @@ jobs:
           echo "SIRIUS_VERSION=$SIRIUS_VERSION" >> "$GITHUB_ENV"
 
       - name: Upload Sirius archive
-        #if: github.event_name == 'workflow_dispatch' && inputs.generate_artifacts == 'true'
+        if: github.event_name == 'workflow_dispatch' && inputs.generate_artifacts == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
         with:
           name: sirius-solver-install-centos7-${{ env.SIRIUS_VERSION }}
@@ -155,7 +155,7 @@ jobs:
           mv "${{ env.SIRIUS_INSTALL_DIR }}" sirius-artifact/
 
       - name: Upload Sirius archive
-        #        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_artifacts }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_artifacts }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
         with:
           name: sirius-solver-install-ol8-${{ env.SIRIUS_VERSION }}
@@ -201,7 +201,7 @@ jobs:
           Move-Item -Path "${{ env.SIRIUS_INSTALL_DIR }}" -Destination "sirius-artifact\" -Force
 
       - name: Upload Sirius archive
-        #        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_artifacts }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generate_artifacts }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # 4.6.2
         with:
           name: sirius-solver-install-windows-${{ env.SIRIUS_VERSION }}
