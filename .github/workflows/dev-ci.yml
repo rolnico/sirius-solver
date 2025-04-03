@@ -97,6 +97,9 @@ jobs:
         run: |
           docker run --name build_container -v $GITHUB_WORKSPACE:/workspace centos7withcmake:latest /bin/bash -c "
             cd /workspace
+            echo "====== /workspace content ======"
+            ls -la /workspace
+            echo "================================"
 
             # Define environment variables
             export SIRIUS_INSTALL_DIR=centos7_sirius-solver-install
@@ -110,6 +113,14 @@ jobs:
             # Compilation and installation
             cmake --build build --config Release -j14
             cmake --install build
+          
+            echo "====== /workspace content ======"
+            ls -la /workspace
+            echo "================================"
+          
+            echo "====== /workspace/build content ======"
+            ls -la /workspace/build
+            echo "================================"
             
             # Extraction of Sirius version
             CONFIG_FILE="build/CPackConfig.cmake"
