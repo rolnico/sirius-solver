@@ -37,10 +37,7 @@ jobs:
       - name: Configure Sirius
         shell: bash
         run: |
-          cmake -S src \
-                -B build \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_INSTALL_PREFIX="${{ env.SIRIUS_INSTALL_DIR }}"
+          cmake -S src -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${{ env.SIRIUS_INSTALL_DIR }}"
 
       - name: Build Sirius
         shell: bash
@@ -55,7 +52,7 @@ jobs:
       - name: Extract Sirius version
         shell: bash
         run: |
-          SIRIUS_VERSION=$(cmake --system-information | awk -F= '/CMAKE_PROJECT_VERSION / {print $2}')
+          SIRIUS_VERSION=$(grep -m1 'SIRIUS_SOLVER_VERSION ' ${{ env.SIRIUS_INSTALL_DIR }}/include/version.h | cut -d '"' -f2)
           echo "SIRIUS_VERSION=$SIRIUS_VERSION" >> "$GITHUB_ENV"
 
       - name: Prepare archive directory
@@ -95,7 +92,7 @@ jobs:
 
       - name: Extract Sirius version
         run: |
-          SIRIUS_VERSION=$(cmake --system-information | awk -F= '/CMAKE_PROJECT_VERSION / {print $2}')
+          SIRIUS_VERSION=$(grep -m1 'SIRIUS_SOLVER_VERSION ' centos7_sirius-solver-install/include/version.h | cut -d '"' -f2)
           echo "SIRIUS_VERSION=$SIRIUS_VERSION" >> "$GITHUB_ENV"
 
       - name: Upload Sirius archive
@@ -148,7 +145,7 @@ jobs:
       - name: Extract Sirius version
         shell: bash
         run: |
-          SIRIUS_VERSION=$(cmake --system-information | awk -F= '/CMAKE_PROJECT_VERSION / {print $2}')
+          SIRIUS_VERSION=$(grep -m1 'SIRIUS_SOLVER_VERSION ' ${{ env.SIRIUS_INSTALL_DIR }}/include/version.h | cut -d '"' -f2)
           echo "SIRIUS_VERSION=$SIRIUS_VERSION" >> "$GITHUB_ENV"
 
       - name: Prepare archive directory
