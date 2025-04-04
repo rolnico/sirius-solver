@@ -1,5 +1,5 @@
 //
-// Created by rolnic on 03/04/25.
+// Author: Nicolas Rol (2025)
 //
 
 #define SIRIUS_SOLVER_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
