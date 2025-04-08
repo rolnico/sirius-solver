@@ -1,0 +1,201 @@
+name: Release CI
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+jobs:
+  release_ubuntu:
+    name: Release on Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set Sirius output variables
+        id: sirius-variables
+        shell: bash
+        continue-on-error: false
+        run: |
+          echo "SIRIUS_INSTALL_DIR=install" >> "$GITHUB_ENV"
+          echo "ARCHIVE_PATH=${{ github.workspace }}/sirius-solver-ubuntu" >> "$GITHUB_ENV"
+
+      - name: Configure Sirius
+        shell: bash
+        run: |
+          cmake -S src -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${{ env.SIRIUS_INSTALL_DIR }}"
+
+      - name: Build Sirius
+        shell: bash
+        run: |
+          cmake --build build --config Release --parallel
+
+      - name: Install Sirius
+        shell: bash
+        run: |
+          cmake --install build
+
+      - name: Extract Sirius version
+        shell: bash
+        run: |
+          SIRIUS_VERSION=$(grep -m1 'SIRIUS_SOLVER_VERSION ' ${{ env.SIRIUS_INSTALL_DIR }}/include/version.h | cut -d '"' -f2)
+          echo "SIRIUS_VERSION=$SIRIUS_VERSION" >> "$GITHUB_ENV"
+
+      - name: Prepare archive directory
+        shell: bash
+        run: |
+          zip -r ${{ env.ARCHIVE_PATH }} ${{ env.SIRIUS_INSTALL_DIR }}
+
+      - name: Upload release package
+        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2.0.9
+        with:
+          files: ${{ env.ARCHIVE_PATH }}.zip
+
+  release_centos7:
+    name: Release on CentOS7
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set Sirius output variables
+        id: sirius-variables
+        shell: bash
+        continue-on-error: false
+        run: |
+          echo "SIRIUS_INSTALL_DIR=install" >> "$GITHUB_ENV"
+          echo "ARCHIVE_PATH=${{ github.workspace }}/sirius-solver-centos7" >> "$GITHUB_ENV"
+
+      - name: Build the Docker image
+        run: >
+          docker build -t centos7withcmake:latest $GITHUB_WORKSPACE --file $GITHUB_WORKSPACE/.github/workflows/docker/Dockerfile
+
+      - name: Run build steps in Docker container
+        run: |
+          docker run --name build_container -v $GITHUB_WORKSPACE:/workspace centos7withcmake:latest /bin/bash -c "
+            cd /workspace &&
+            cmake -S src -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install &&
+            cmake --build build --config Release --parallel &&
+            cmake --install build
+          "
+
+      - name: Extract Sirius version
+        shell: bash
+        run: |
+          SIRIUS_VERSION=$(grep -m1 'SIRIUS_SOLVER_VERSION ' ${{ env.SIRIUS_INSTALL_DIR }}/include/version.h | cut -d '"' -f2)
+          echo "SIRIUS_VERSION=$SIRIUS_VERSION" >> "$GITHUB_ENV"
+
+      - name: Prepare archive directory
+        shell: bash
+        run: |
+          zip -r ${{ env.ARCHIVE_PATH }} install
+
+      - name: Upload release package
+        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2.0.9
+        with:
+          files: ${{ env.ARCHIVE_PATH }}.zip
+
+  release_oracle_linux8:
+    name: Release on Oracle Linux 8
+    runs-on: ubuntu-latest
+    container:
+      image: 'oraclelinux:8'
+      options: --volume "${{ github.workspace }}:/github/workspace"
+    steps:
+      - name: Install required dependencies
+        run: |
+          dnf update -y
+          dnf install -y epel-release dnf-plugins-core
+          dnf config-manager --set-enabled ol8_codeready_builder
+          dnf install -y git cmake make gcc gcc-c++ ninja-build zip || true
+          dnf clean all
+
+      - name: Checkout sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set Sirius output variables
+        id: sirius-variables
+        shell: bash
+        continue-on-error: false
+        run: |
+          echo "SIRIUS_INSTALL_DIR=install" >> "$GITHUB_ENV"
+          echo "ARCHIVE_PATH=/github/workspace/sirius-solver-oraclelinux8" >> "$GITHUB_ENV"
+
+      - name: Configure Sirius
+        shell: bash
+        run: >
+          cmake -S src -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${{ env.SIRIUS_INSTALL_DIR }}"
+
+      - name: Build Sirius
+        shell: bash
+        run: >
+          cmake --build build --config Release --parallel
+
+      - name: Install Sirius
+        shell: bash
+        run: >
+          cmake --install build
+
+      - name: Extract Sirius version
+        shell: bash
+        run: |
+          SIRIUS_VERSION=$(grep -m1 'SIRIUS_SOLVER_VERSION ' ${{ env.SIRIUS_INSTALL_DIR }}/include/version.h | cut -d '"' -f2)
+          echo "SIRIUS_VERSION=$SIRIUS_VERSION" >> "$GITHUB_ENV"
+
+      - name: Prepare archive directory
+        shell: bash
+        run: |
+          zip -r ${{ env.ARCHIVE_PATH }} ${{ env.SIRIUS_INSTALL_DIR }}
+
+      - name: Upload release package
+        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2.0.9
+        with:
+          files: ${{ env.ARCHIVE_PATH }}.zip
+
+  release_windows:
+    name: Release on Windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set Sirius output variables
+        id: sirius-variables
+        continue-on-error: false
+        run: |
+          echo "SIRIUS_INSTALL_DIR=install" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "ARCHIVE_PATH=${{ github.workspace }}\sirius-solver-windows.zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Configure Sirius
+        run: >
+          cmake -S src -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${{ env.SIRIUS_INSTALL_DIR }}"
+
+      - name: Build Sirius
+        run: >
+          cmake --build build --config Release --parallel
+
+      - name: Install Sirius
+        run: >
+          cmake --install build
+
+      - name: Extract Sirius version
+        run: |
+          $versionLine = Get-Content "${{ env.SIRIUS_INSTALL_DIR }}\include\version.h" | Select-String -Pattern '#define SIRIUS_SOLVER_VERSION '
+          $SIRIUS_VERSION = $versionLine -replace '.*"([^"]+)".*', '$1'
+          echo "SIRIUS_VERSION=$SIRIUS_VERSION" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Prepare archive directory
+        run: >
+          Compress-Archive -Path "${{ env.SIRIUS_INSTALL_DIR }}" -DestinationPath "${{ env.ARCHIVE_PATH }}"
+
+      - name: Upload release package
+        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2.0.9
+        with:
+          files: ${{ env.ARCHIVE_PATH }}
